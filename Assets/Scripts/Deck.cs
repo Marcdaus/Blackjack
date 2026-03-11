@@ -120,8 +120,8 @@ public class Deck : MonoBehaviour
         hitButton.interactable = true;
         stickButton.interactable = true;
         finalMessage.text = "";
-        player.GetComponent<CardHand>().Clear();
-        dealer.GetComponent<CardHand>().Clear();          
+        player.GetComponent<CardHand>().ClearCards();
+        dealer.GetComponent<CardHand>().ClearCards();          
         cardIndex = 0;
         ShuffleCards();
         StartGame();

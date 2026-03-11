@@ -13,24 +13,24 @@ public class CardHand : MonoBehaviour
     {
         points = 0;
         //Definimos dónde posicionamos las cartas de cada uno
-        if (!isDealer)
+        if (!isDealer) // Si no es el dealer las cartas en la coord Y = 3
             coordY = 3;
-        else
+        else // Si es el dealer las cartas en la coord Y = -1
             coordY = -1;
     }
 
-    public void Clear()
+    public void ClearCards()
     {
         points = 0;
         if (!isDealer)
             coordY = 3;
         else
             coordY = -1;
-        foreach (GameObject g in cards)
+        foreach (GameObject g in cards) // Destruye las cartas
         {
             Destroy(g);
         }
-        cards.Clear();                        
+        cards.Clear(); // Vaciar lista de cartas                        
     }        
 
     public void InitialToggle()
