@@ -159,13 +159,42 @@ public class Deck : MonoBehaviour
         /*TODO: 
          * Si estamos en la mano inicial, debemos voltear la primera carta del dealer.
          */
+        if (cardIndex == 4)
+        {
+            dealer.GetComponent<CardHand>().InitialToggle();
+        }
 
         /*TODO:
          * Repartimos cartas al dealer si tiene 16 puntos o menos
          * El dealer se planta al obtener 17 puntos o más
          * Mostramos el mensaje del que ha ganado
-         */                
-         
+         */
+        if (dealer.GetComponent<CardHand>().points <= 16)
+        {
+            PushDealer();
+        }else if(dealer.GetComponent<CardHand>().points > 16)
+        {
+            if (dealer.GetComponent<CardHand>().points > 21)
+            {
+                finalMessage.text = "Ganaste!!!";
+                hitButton.interactable = false;
+                stickButton.interactable = false;
+
+            }else if (dealer.GetComponent<CardHand>().points < player.GetComponent<CardHand>().points) // |puntos| dealer < player
+            {
+                finalMessage.text = "Ganaste!!!";
+                hitButton.interactable = false;
+                stickButton.interactable = false;
+            }
+            else
+            {
+                finalMessage.text = "Perdiste!!!";
+                hitButton.interactable = false;
+                stickButton.interactable = false;
+            }
+        }
+
+
     }
 
     public void PlayAgain()
