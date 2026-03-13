@@ -11,6 +11,7 @@ public class Deck : MonoBehaviour
     public Button playAgainButton;
     public Text finalMessage;
     public Text probMessage;
+    [SerializeField]private Text puntos_player;
 
     public int[] values = new int[52];
     int cardIndex = 0;    
@@ -35,14 +36,18 @@ public class Deck : MonoBehaviour
          * Por ejemplo, si en faces[1] hay un 2 de corazones, en values[1] debería haber un 2.
          */
 
-        for (int i = 0; i< 52; i++)
+        for (int i = 0; i < 52; i++)
         {
             // Como J,K y Q (Cartas 11, 12 y 13) tienen valor 10, aplicamos el if para filtrarlos
             // Y así les asignamos el valor de 10
-            if (i % 13 < 10)    
-                values[i] = (i % 13) + 1;
-            else
+            int cardValue = i % 13;
+
+            if (cardValue == 0)       // AS
+                values[i] = 11;
+            else if (cardValue >= 10) // J Q K
                 values[i] = 10;
+            else
+                values[i] = cardValue + 1;
         }
 
 
@@ -81,6 +86,7 @@ public class Deck : MonoBehaviour
         {
             PushPlayer();
             PushDealer();
+            puntos_player.text = player.GetComponent<CardHand>().points.ToString();
             /*TODO:
              * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
              */
@@ -114,7 +120,8 @@ public class Deck : MonoBehaviour
         /*TODO:
          * Dependiendo de cómo se implemente ShuffleCards, es posible que haya que cambiar el índice.
          */
-        dealer.GetComponent<CardHand>().Push(faces[cardIndex],values[cardIndex]);
+        int index = Shuffle[cardIndex];
+        dealer.GetComponent<CardHand>().Push(faces[index], values[index]);
         cardIndex++;        
     }
 
@@ -123,10 +130,12 @@ public class Deck : MonoBehaviour
         /*TODO:
          * Dependiendo de cómo se implemente ShuffleCards, es posible que haya que cambiar el índice.
          */
-        player.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex]/*,cardCopy*/);
+        int index = Shuffle[cardIndex];
+        player.GetComponent<CardHand>().Push(faces[index], values[index]);
         cardIndex++;
         CalculateProbabilities();
-    }       
+    }
+
 
     public void Hit()
     {
@@ -141,7 +150,7 @@ public class Deck : MonoBehaviour
 
         //Repartimos carta al jugador
         PushPlayer();
-
+        puntos_player.text = player.GetComponent<CardHand>().points.ToString();
         /*TODO:
          * Comprobamos si el jugador ya ha perdido y mostramos mensaje
          */
