@@ -56,13 +56,22 @@ public class Deck : MonoBehaviour
          * El método Random.Range(0,n), devuelve un valor entre 0 y n-1
          * Si lo necesitas, puedes definir nuevos arrays.
          */
-        for(int i = 0; i < 52; i++)
+
+        // llenar array
+        for (int i = 0; i < 52; i++)
         {
-            Shuffle[i] = Random.Range(0, 52);
+            Shuffle[i] = i;
         }
-        
 
-
+        // mezclar, aplicando el algoritmo de Fisher-Yates
+        // Como funciona es, que recorre el array intercambiando de lugar los valores de manera aleatoria
+        for (int i = 0; i < 52; i++)
+        {
+            int r = Random.Range(i, 52);
+            int temp = Shuffle[i];
+            Shuffle[i] = Shuffle[r];
+            Shuffle[r] = temp;
+        }
 
     }
 
