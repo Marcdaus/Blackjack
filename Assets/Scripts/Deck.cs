@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using NUnit.Framework;
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,9 +12,9 @@ public class Deck : MonoBehaviour
     public Button hitButton;
     public Button stickButton;
     public Button playAgainButton;
-    public Text finalMessage;
-    public Text probMessage;
-    [SerializeField]private Text puntos_player;
+    public TMP_Text finalMessage;
+    public TMP_Text probMessage;
+    [SerializeField]private TMP_Text puntos_player;
 
     public int[] values = new int[52];
     int cardIndex = 0;    
@@ -109,23 +111,28 @@ public class Deck : MonoBehaviour
 
     private void CalculateProbabilities()
     {
+
+        /*Calcular las probabilidades de:
+        
+        Probabilidad de que el jugador obtenga más de 21 si pide una carta
+        */
+
         // Nos aseguramos de que ambos tienen al menos 2 cartas antes de calcular
         if (player.GetComponent<CardHand>().cards.Count < 2 || dealer.GetComponent<CardHand>().cards.Count < 2)
         {
             probMessage.text = "";
             return;
         }
-
+        // Obtenemos las manos del jugador y el dealer para conocer sus puntos
         CardHand playerHand = player.GetComponent<CardHand>();
         CardHand dealerHand = dealer.GetComponent<CardHand>();
 
-        // ---------------------------------------------------------
-        // 1. Probabilidad de que el dealer tenga más puntuación
-        // ---------------------------------------------------------
-        int dealerHigherCount = 0;
+        // Teniendo la carta oculta, probabilidad de que el dealer tenga más puntuación que el jugador
 
-        // Las cartas "no vistas" por el jugador incluyen el mazo restante + la carta oculta real del dealer
-        List<int> unseenValues = new List<int>();
+        int dealerHigherCount = 0; //contador de casos en los que el dealer superaría al jugador con su carta oculta
+
+        
+        List<int> unseenValues = new List<int>();//lista de las cartas que aún no han salido 
         for (int i = cardIndex; i < 52; i++)
         {
             unseenValues.Add(values[Shuffle[i]]); // Añadir cartas restantes en el mazo
@@ -144,41 +151,38 @@ public class Deck : MonoBehaviour
             }
         }
 
-        // ---------------------------------------------------------
-        // 2 & 3. Probabilidad de que el jugador obtenga 17-21 o se pase (>21)
-        // ---------------------------------------------------------
+
+        //Probabilidad de que el jugador obtenga entre un 17 y un 21 si pide una carta
+
         int player17to21Count = 0;
         int playerBustCount = 0;
         int remainingInDeck = 52 - cardIndex;
 
-        if (remainingInDeck > 0)
-        {
-            for (int i = cardIndex; i < 52; i++)
+        for (int i = cardIndex; i < 52; i++)
             {
-                int nextCardVal = values[Shuffle[i]];
+              int nextCardVal = values[Shuffle[i]];
 
-                // Calculamos qué puntos tendría el jugador si pide esta carta
-                int playerHypotheticalPoints = CalculateHypotheticalPoints(playerHand.cards, nextCardVal, false);
+            // Probabilidad de que el jugador obtenga más de 21 si pide una carta
+            int playerHypotheticalPoints = CalculateHypotheticalPoints(playerHand.cards, nextCardVal, false);
 
-                if (playerHypotheticalPoints >= 17 && playerHypotheticalPoints <= 21)
-                    player17to21Count++;
+              if (playerHypotheticalPoints >= 17 && playerHypotheticalPoints <= 21)
+                  player17to21Count++;
 
-                if (playerHypotheticalPoints > 21)
-                    playerBustCount++;
-            }
+              if (playerHypotheticalPoints > 21)
+                  playerBustCount++;            
         }
 
-        // ---------------------------------------------------------
-        // Formatear y mostrar los resultados en el UI (con 1 decimal)
-        // ---------------------------------------------------------
+  
+        //  mostrar los resultados  EN texto
+    
         float probDealerHigher = ((float)dealerHigherCount / unseenValues.Count) * 100f;
         float prob17to21 = remainingInDeck > 0 ? ((float)player17to21Count / remainingInDeck) * 100f : 0;
         float probBust = remainingInDeck > 0 ? ((float)playerBustCount / remainingInDeck) * 100f : 0;
 
         probMessage.text = $"Probabilidades:\n" +
-                           $"Dealer > Jugador: {probDealerHigher:F1}%\n" +
-                           $"17 a 21 (Hit): {prob17to21:F1}%\n" +
-                           $"Pasarse (Hit): {probBust:F1}%";
+                           $"Dealer mas puntos que Jugador: {probDealerHigher:F1}%\n" +
+                           $"17 a 21 con el siguiente (Hit): {prob17to21:F1}%\n" +
+                           $"Pasarse con el siguiente (Hit): {probBust:F1}%";
     }
 
     // --- MÉTODO AUXILIAR ---
@@ -188,7 +192,7 @@ public class Deck : MonoBehaviour
         int val = 0;
         int aces = 0;
 
-        // Si es el dealer, ignoramos su carta real en la pos 0 (porque la sustituimos por la hipotética)
+        // Si es el dealer, ignoramos su carta real en la pos 0 
         int startIndex = isDealerEvaluation ? 1 : 0;
 
         for (int i = startIndex; i < handCards.Count; i++)
