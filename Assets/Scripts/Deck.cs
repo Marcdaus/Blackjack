@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class Deck : MonoBehaviour
@@ -25,7 +26,8 @@ public class Deck : MonoBehaviour
     private void Start()
     {
         ShuffleCards();
-        StartGame();        
+        StartGame();
+        CalculateProbabilities();
     }
 
     private void InitCardValues()
@@ -107,12 +109,107 @@ public class Deck : MonoBehaviour
 
     private void CalculateProbabilities()
     {
-        /*TODO:
-         * Calcular las probabilidades de:
-         * - Teniendo la carta oculta, probabilidad de que el dealer tenga más puntuación que el jugador
-         * - Probabilidad de que el jugador obtenga entre un 17 y un 21 si pide una carta
-         * - Probabilidad de que el jugador obtenga más de 21 si pide una carta          
-         */
+        // Nos aseguramos de que ambos tienen al menos 2 cartas antes de calcular
+        if (player.GetComponent<CardHand>().cards.Count < 2 || dealer.GetComponent<CardHand>().cards.Count < 2)
+        {
+            probMessage.text = "";
+            return;
+        }
+
+        CardHand playerHand = player.GetComponent<CardHand>();
+        CardHand dealerHand = dealer.GetComponent<CardHand>();
+
+        // ---------------------------------------------------------
+        // 1. Probabilidad de que el dealer tenga más puntuación
+        // ---------------------------------------------------------
+        int dealerHigherCount = 0;
+
+        // Las cartas "no vistas" por el jugador incluyen el mazo restante + la carta oculta real del dealer
+        List<int> unseenValues = new List<int>();
+        for (int i = cardIndex; i < 52; i++)
+        {
+            unseenValues.Add(values[Shuffle[i]]); // Añadir cartas restantes en el mazo
+        }
+        unseenValues.Add(dealerHand.cards[0].GetComponent<CardModel>().value); // Añadir la carta oculta
+
+        foreach (int unseenVal in unseenValues)
+        {
+            // Calculamos qué puntos tendría el dealer si esta carta fuera su oculta
+            int dealerHypotheticalPoints = CalculateHypotheticalPoints(dealerHand.cards, unseenVal, true);
+
+            // Si el dealer nos superaría (y no se pasa de 21)
+            if (dealerHypotheticalPoints > playerHand.points && dealerHypotheticalPoints <= 21)
+            {
+                dealerHigherCount++;
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 2 & 3. Probabilidad de que el jugador obtenga 17-21 o se pase (>21)
+        // ---------------------------------------------------------
+        int player17to21Count = 0;
+        int playerBustCount = 0;
+        int remainingInDeck = 52 - cardIndex;
+
+        if (remainingInDeck > 0)
+        {
+            for (int i = cardIndex; i < 52; i++)
+            {
+                int nextCardVal = values[Shuffle[i]];
+
+                // Calculamos qué puntos tendría el jugador si pide esta carta
+                int playerHypotheticalPoints = CalculateHypotheticalPoints(playerHand.cards, nextCardVal, false);
+
+                if (playerHypotheticalPoints >= 17 && playerHypotheticalPoints <= 21)
+                    player17to21Count++;
+
+                if (playerHypotheticalPoints > 21)
+                    playerBustCount++;
+            }
+        }
+
+        // ---------------------------------------------------------
+        // Formatear y mostrar los resultados en el UI (con 1 decimal)
+        // ---------------------------------------------------------
+        float probDealerHigher = ((float)dealerHigherCount / unseenValues.Count) * 100f;
+        float prob17to21 = remainingInDeck > 0 ? ((float)player17to21Count / remainingInDeck) * 100f : 0;
+        float probBust = remainingInDeck > 0 ? ((float)playerBustCount / remainingInDeck) * 100f : 0;
+
+        probMessage.text = $"Probabilidades:\n" +
+                           $"Dealer > Jugador: {probDealerHigher:F1}%\n" +
+                           $"17 a 21 (Hit): {prob17to21:F1}%\n" +
+                           $"Pasarse (Hit): {probBust:F1}%";
+    }
+
+    // --- MÉTODO AUXILIAR ---
+    // Calcula los puntos si se añadiera una carta extra a la mano evaluada.
+    private int CalculateHypotheticalPoints(List<GameObject> handCards, int newCardValue, bool isDealerEvaluation)
+    {
+        int val = 0;
+        int aces = 0;
+
+        // Si es el dealer, ignoramos su carta real en la pos 0 (porque la sustituimos por la hipotética)
+        int startIndex = isDealerEvaluation ? 1 : 0;
+
+        for (int i = startIndex; i < handCards.Count; i++)
+        {
+            int cardVal = handCards[i].GetComponent<CardModel>().value;
+            if (cardVal == 11) aces++;
+            else val += cardVal;
+        }
+
+        // Sumamos la carta que estamos "imaginando" que sale
+        if (newCardValue == 11) aces++;
+        else val += newCardValue;
+
+        // Lógica para que los Ases valgan 11 o 1 sin pasarse
+        for (int i = 0; i < aces; i++)
+        {
+            if (val + 11 <= 21) val += 11;
+            else val += 1;
+        }
+
+        return val;
     }
 
     void PushDealer()
@@ -122,7 +219,8 @@ public class Deck : MonoBehaviour
          */
         int index = Shuffle[cardIndex];
         dealer.GetComponent<CardHand>().Push(faces[index], values[index]);
-        cardIndex++;        
+        cardIndex++;
+        CalculateProbabilities();
     }
 
     void PushPlayer()
