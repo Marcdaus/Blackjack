@@ -14,22 +14,45 @@ public class Deck : MonoBehaviour
     public Button playAgainButton;
     public TMP_Text finalMessage;
     public TMP_Text probMessage;
-    [SerializeField]private TMP_Text puntos_player;
+    [SerializeField] private TMP_Text puntos_player;
+
+
+    // --- VARIABLES DE APUESTAS Y DINERO ---
+    public TMP_Text moneyText;       // Texto para el dinero del jugador
+    public TMP_Text betText;         // Texto para la apuesta actual
+    public Button bet10Button;       // Botón para apostar 10€
+    public Button bet100Button;      // Botón para apostar 100€
+    public Button bet1000Button;     // Botón para apostar 1000€
+    public Button bet10MinusButton;       // Botón para apostar 10€
+    public Button bet100MinusButton;      // Botón para apostar 100€
+    public Button bet1000MinusButton;     // Botón para apostar 1000€
+    public Button dealButton;        // Botón para repartir las cartas
+    public Button restartButton;        // Botón para repartir las cartas
+
+
+    public int banca = 1000;         // Dinero inicial
+    public int apuestaActual = 0;    // Lo que el jugador ha apostado esta ronda
+    private bool enFaseApuestas = true; // Controla si estamos en el momento de apostar
 
     public int[] values = new int[52];
-    int cardIndex = 0;    
-       
-    private void Awake()
-    {    
-        InitCardValues();        
+    int cardIndex = 0;
 
+    private void Awake()
+    {
+        InitCardValues();
     }
 
     private void Start()
     {
         ShuffleCards();
-        StartGame();
-        CalculateProbabilities();
+
+        // Al empezar, activamos la fase de apuestas y desactivamos los botones de juego
+        enFaseApuestas = true;
+        ActualizarTextosApuestas();
+
+        hitButton.interactable = false;
+        stickButton.interactable = false;
+        playAgainButton.interactable = false;
     }
 
     private void InitCardValues()
@@ -53,10 +76,8 @@ public class Deck : MonoBehaviour
             else
                 values[i] = cardValue + 1;
         }
-
-
-
     }
+
     public int[] Shuffle = new int[52];
     private void ShuffleCards()
     {
@@ -81,7 +102,121 @@ public class Deck : MonoBehaviour
             Shuffle[i] = Shuffle[r];
             Shuffle[r] = temp;
         }
+    }
 
+    // --- MÉTODOS DE APUESTAS ---
+    public void Apostar10() { RealizarApuesta(10); }
+    public void Apostar100() { RealizarApuesta(100); }
+    public void Apostar1000() { RealizarApuesta(1000); }
+
+    // CAMBIO: Ahora pasamos el valor en positivo y usamos la función DeshacerApuesta
+    public void ApostarMinus10() { DeshacerApuesta(10); }
+    public void ApostarMinus100() { DeshacerApuesta(100); }
+    public void ApostarMinus1000() { DeshacerApuesta(1000); }
+
+    public void Restart()
+    {
+        // CAMBIO: Reiniciamos todo a sus valores por defecto y actualizamos la interfaz
+        banca = 1000;
+        apuestaActual = 0;
+        ActualizarTextosApuestas();
+    }
+
+    private void RealizarApuesta(int cantidad)
+    {
+        if (banca >= cantidad && enFaseApuestas)
+        {
+            banca -= cantidad;
+            apuestaActual += cantidad;
+            ActualizarTextosApuestas();
+        }
+    }
+    private void DeshacerApuesta(int cantidad)
+    {
+        // Comprobamos que haya suficiente apuesta en la mesa para quitar
+        if (apuestaActual >= cantidad && enFaseApuestas)
+        {
+            banca += cantidad;           // Devolvemos el dinero a la banca
+            apuestaActual -= cantidad;   // Se lo restamos a la mesa
+            ActualizarTextosApuestas();  // Actualizamos la interfaz gráfica
+        }
+    }
+
+    public void RepartirCartas()
+    {
+        // Empezamos la partida y desactivamos las apuestas
+        enFaseApuestas = false;
+        ActualizarTextosApuestas();
+
+        hitButton.interactable = true;
+        stickButton.interactable = true;
+        StartGame();
+    }
+
+    private void ActualizarTextosApuestas()
+    {
+        if (moneyText != null) moneyText.text = $"{banca}€";
+        if (betText != null) betText.text = $"{apuestaActual}€";
+
+        if (enFaseApuestas)
+        {
+            if (bet10Button != null) bet10Button.interactable = (banca >= 10);
+            if (bet100Button != null) bet100Button.interactable = (banca >= 100);
+            if (bet1000Button != null) bet1000Button.interactable = (banca >= 1000);
+            if (bet10MinusButton != null) bet10MinusButton.interactable = (apuestaActual >= 10);
+            if (bet100MinusButton != null) bet100MinusButton.interactable = (apuestaActual >= 100);
+            if (bet1000MinusButton != null) bet1000MinusButton.interactable = (apuestaActual >= 1000);
+            if (dealButton != null) dealButton.interactable = (apuestaActual > 0);
+
+            if (restartButton != null) restartButton.interactable = true;
+        }
+        else
+        {
+            if (bet10Button != null) bet10Button.interactable = false;
+            if (bet100Button != null) bet100Button.interactable = false;
+            if (bet1000Button != null) bet1000Button.interactable = false;
+            if (bet10MinusButton != null) bet10MinusButton.interactable = false;
+            if (bet100MinusButton != null) bet100MinusButton.interactable = false;
+            if (bet1000MinusButton != null) bet1000MinusButton.interactable = false;
+            if (dealButton != null) dealButton.interactable = false;
+
+            if (restartButton != null) restartButton.interactable = false;
+        }
+    }
+
+    // Método centralizado para pagar apuestas y mostrar mensajes
+    private void TerminarJuego(string resultado)
+    {
+        hitButton.interactable = false;
+        stickButton.interactable = false;
+        playAgainButton.interactable = true;
+
+        if (resultado == "ganar")
+        {
+            finalMessage.text = "Ganaste!!!";
+            banca += apuestaActual * 2;
+        }
+        else if (resultado == "perder")
+        {
+            finalMessage.text = "Perdiste!!!";
+        }
+        else if (resultado == "empate")
+        {
+            finalMessage.text = "Empate!!!";
+            banca += apuestaActual;
+        }
+        else if (resultado == "blackjack_player")
+        {
+            finalMessage.text = "¡Blackjack! Has ganado";
+            banca += apuestaActual * 2;
+        }
+        else if (resultado == "blackjack_dealer")
+        {
+            finalMessage.text = "¡Blackjack! Ha ganado el dealer";
+        }
+
+        apuestaActual = 0;
+        ActualizarTextosApuestas();
     }
 
     void StartGame()
@@ -91,27 +226,29 @@ public class Deck : MonoBehaviour
             PushPlayer();
             PushDealer();
             puntos_player.text = player.GetComponent<CardHand>().points.ToString();
+
             /*TODO:
              * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
              */
         }
-        if (player.GetComponent<CardHand>().points == 21)
+
+        // Comprobación de Blackjack inicial
+        if (player.GetComponent<CardHand>().points == 21 && dealer.GetComponent<CardHand>().points == 21)
         {
-            finalMessage.text = "¡Blackjack! Has ganado";
-            hitButton.interactable = false;
-            stickButton.interactable = false;
+            TerminarJuego("empate");
         }
-         else if (dealer.GetComponent<CardHand>().points == 21)
+        else if (player.GetComponent<CardHand>().points == 21)
         {
-            finalMessage.text = "¡Blackjack! Ha ganado el dealer";
-            hitButton.interactable = false;
-            stickButton.interactable = false;
+            TerminarJuego("blackjack_player");
+        }
+        else if (dealer.GetComponent<CardHand>().points == 21)
+        {
+            TerminarJuego("blackjack_dealer");
         }
     }
 
     private void CalculateProbabilities()
     {
-
         /*Calcular las probabilidades de:
         
         Probabilidad de que el jugador obtenga más de 21 si pide una carta
@@ -131,7 +268,6 @@ public class Deck : MonoBehaviour
 
         int dealerHigherCount = 0; //contador de casos en los que el dealer superaría al jugador con su carta oculta
 
-        
         List<int> unseenValues = new List<int>();//lista de las cartas que aún no han salido 
         for (int i = cardIndex; i < 52; i++)
         {
@@ -151,7 +287,6 @@ public class Deck : MonoBehaviour
             }
         }
 
-
         //Probabilidad de que el jugador obtenga entre un 17 y un 21 si pide una carta
 
         int player17to21Count = 0;
@@ -159,22 +294,20 @@ public class Deck : MonoBehaviour
         int remainingInDeck = 52 - cardIndex;
 
         for (int i = cardIndex; i < 52; i++)
-            {
-              int nextCardVal = values[Shuffle[i]];
+        {
+            int nextCardVal = values[Shuffle[i]];
 
             // Probabilidad de que el jugador obtenga más de 21 si pide una carta
             int playerHypotheticalPoints = CalculateHypotheticalPoints(playerHand.cards, nextCardVal, false);
 
-              if (playerHypotheticalPoints >= 17 && playerHypotheticalPoints <= 21)
-                  player17to21Count++;
+            if (playerHypotheticalPoints >= 17 && playerHypotheticalPoints <= 21)
+                player17to21Count++;
 
-              if (playerHypotheticalPoints > 21)
-                  playerBustCount++;            
+            if (playerHypotheticalPoints > 21)
+                playerBustCount++;
         }
 
-  
         //  mostrar los resultados  EN texto
-    
         float probDealerHigher = ((float)dealerHigherCount / unseenValues.Count) * 100f;
         float prob17to21 = remainingInDeck > 0 ? ((float)player17to21Count / remainingInDeck) * 100f : 0;
         float probBust = remainingInDeck > 0 ? ((float)playerBustCount / remainingInDeck) * 100f : 0;
@@ -238,7 +371,6 @@ public class Deck : MonoBehaviour
         CalculateProbabilities();
     }
 
-
     public void Hit()
     {
         /*TODO: 
@@ -248,21 +380,18 @@ public class Deck : MonoBehaviour
         {
             dealer.GetComponent<CardHand>().InitialToggle();
         }
-        
 
         //Repartimos carta al jugador
         PushPlayer();
         puntos_player.text = player.GetComponent<CardHand>().points.ToString();
+
         /*TODO:
          * Comprobamos si el jugador ya ha perdido y mostramos mensaje
          */
         if (player.GetComponent<CardHand>().points > 21)
         {
-            finalMessage.text = "Perdiste!!!";
-            hitButton.interactable = false;
-            stickButton.interactable = false;
+            TerminarJuego("perder");
         }
-
     }
 
     public void Stand()
@@ -280,44 +409,50 @@ public class Deck : MonoBehaviour
          * El dealer se planta al obtener 17 puntos o más
          * Mostramos el mensaje del que ha ganado
          */
-        while (dealer.GetComponent<CardHand>().points <= 16) {
+        while (dealer.GetComponent<CardHand>().points <= 16)
+        {
             PushDealer();
         }
-        if(dealer.GetComponent<CardHand>().points > 16)
-        {
-            if (dealer.GetComponent<CardHand>().points > 21)
-            {
-                finalMessage.text = "Ganaste!!!";
-                hitButton.interactable = false;
-                stickButton.interactable = false;
 
-            }else if (dealer.GetComponent<CardHand>().points < player.GetComponent<CardHand>().points) // |puntos| dealer < player
+        if (dealer.GetComponent<CardHand>().points > 16)
+        {
+            int pDealer = dealer.GetComponent<CardHand>().points;
+            int pPlayer = player.GetComponent<CardHand>().points;
+
+            if (pDealer > 21)
             {
-                finalMessage.text = "Ganaste!!!";
-                hitButton.interactable = false;
-                stickButton.interactable = false;
+                TerminarJuego("ganar"); // "Ganaste!!!"
+
+            }
+            else if (pDealer < pPlayer) // |puntos| dealer < player
+            {
+                TerminarJuego("ganar"); // "Ganaste!!!"
+            }
+            else if (pDealer == pPlayer) // Añadimos empate para que las apuestas sean justas
+            {
+                TerminarJuego("empate");
             }
             else
             {
-                finalMessage.text = "Perdiste!!!";
-                hitButton.interactable = false;
-                stickButton.interactable = false;
+                TerminarJuego("perder"); // "Perdiste!!!"
             }
         }
-
-
     }
 
     public void PlayAgain()
     {
-        hitButton.interactable = true;
-        stickButton.interactable = true;
         finalMessage.text = "";
         player.GetComponent<CardHand>().ClearCards();
-        dealer.GetComponent<CardHand>().ClearCards();          
+        dealer.GetComponent<CardHand>().ClearCards();
         cardIndex = 0;
         ShuffleCards();
-        StartGame();
+
+        // Reiniciamos fase de apuestas
+        enFaseApuestas = true;
+        ActualizarTextosApuestas();
+
+        playAgainButton.interactable = false;
+        probMessage.text = "";
+        puntos_player.text = "0";
     }
-    
 }
