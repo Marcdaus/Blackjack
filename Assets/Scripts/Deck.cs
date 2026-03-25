@@ -23,11 +23,11 @@ public class Deck : MonoBehaviour
     public Button bet10Button;       // Botón para apostar 10€
     public Button bet100Button;      // Botón para apostar 100€
     public Button bet1000Button;     // Botón para apostar 1000€
-    public Button bet10MinusButton;       // Botón para apostar 10€
-    public Button bet100MinusButton;      // Botón para apostar 100€
-    public Button bet1000MinusButton;     // Botón para apostar 1000€
+    public Button bet10MinusButton;       // Botón para apostar -10€
+    public Button bet100MinusButton;      // Botón para apostar -100€
+    public Button bet1000MinusButton;     // Botón para apostar -1000€
     public Button dealButton;        // Botón para repartir las cartas
-    public Button restartButton;        // Botón para repartir las cartas
+    public Button restartButton;        // Botón para reiniciar la banca
 
 
     public int banca = 1000;         // Dinero inicial
@@ -108,15 +108,13 @@ public class Deck : MonoBehaviour
     public void Apostar10() { RealizarApuesta(10); }
     public void Apostar100() { RealizarApuesta(100); }
     public void Apostar1000() { RealizarApuesta(1000); }
-
-    // CAMBIO: Ahora pasamos el valor en positivo y usamos la función DeshacerApuesta
     public void ApostarMinus10() { DeshacerApuesta(10); }
     public void ApostarMinus100() { DeshacerApuesta(100); }
     public void ApostarMinus1000() { DeshacerApuesta(1000); }
 
     public void Restart()
     {
-        // CAMBIO: Reiniciamos todo a sus valores por defecto y actualizamos la interfaz
+        // Reiniciamos todo a sus valores por defecto y actualizamos la interfaz
         banca = 1000;
         apuestaActual = 0;
         ActualizarTextosApuestas();
@@ -227,12 +225,11 @@ public class Deck : MonoBehaviour
             PushDealer();
             puntos_player.text = player.GetComponent<CardHand>().points.ToString();
 
-            /*TODO:
-             * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
-             */
+            
         }
-
-        // Comprobación de Blackjack inicial
+        /*TODO:
+         * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
+         */
         if (player.GetComponent<CardHand>().points == 21 && dealer.GetComponent<CardHand>().points == 21)
         {
             TerminarJuego("empate");
@@ -318,7 +315,6 @@ public class Deck : MonoBehaviour
                            $"Pasarse con el siguiente (Hit): {probBust:F1}%";
     }
 
-    // --- MÉTODO AUXILIAR ---
     // Calcula los puntos si se añadiera una carta extra a la mano evaluada.
     private int CalculateHypotheticalPoints(List<GameObject> handCards, int newCardValue, bool isDealerEvaluation)
     {
@@ -335,7 +331,7 @@ public class Deck : MonoBehaviour
             else val += cardVal;
         }
 
-        // Sumamos la carta que estamos "imaginando" que sale
+        // Sumamos la carta que estamos imaginando que sale
         if (newCardValue == 11) aces++;
         else val += newCardValue;
 
