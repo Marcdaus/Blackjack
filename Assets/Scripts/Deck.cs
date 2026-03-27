@@ -122,11 +122,12 @@ public class Deck : MonoBehaviour
 
     private void RealizarApuesta(int cantidad)
     {
+        // Comprobamos que haya suficiente banca en la mesa para quitar
         if (banca >= cantidad && enFaseApuestas)
         {
-            banca -= cantidad;
-            apuestaActual += cantidad;
-            ActualizarTextosApuestas();
+            banca -= cantidad;          // Restamos el dinero a la banca
+            apuestaActual += cantidad;  // Se lo sumamos a la mesa
+            ActualizarTextosApuestas(); // Actualizamos la interfaz gráfica
         }
     }
     private void DeshacerApuesta(int cantidad)
@@ -155,7 +156,7 @@ public class Deck : MonoBehaviour
     {
         if (moneyText != null) moneyText.text = $"{banca}€";
         if (betText != null) betText.text = $"{apuestaActual}€";
-
+        // En fase de apuestas, activamos o desactivamos los botones según la cantidad de dinero que haya en la banca o en la apuesta actual
         if (enFaseApuestas)
         {
             if (bet10Button != null) bet10Button.interactable = (banca >= 10);
@@ -168,7 +169,7 @@ public class Deck : MonoBehaviour
 
             if (restartButton != null) restartButton.interactable = true;
         }
-        else
+        else // Si no estamos en fase de apuestas, desactivamos todos los botones relacionados con las apuestas
         {
             if (bet10Button != null) bet10Button.interactable = false;
             if (bet100Button != null) bet100Button.interactable = false;
@@ -182,13 +183,14 @@ public class Deck : MonoBehaviour
         }
     }
 
-    // Método centralizado para pagar apuestas y mostrar mensajes
+    // Método acabar la ronda y repartimos dinero o quitamos, también el mensaje final
     private void TerminarJuego(string resultado)
     {
         hitButton.interactable = false;
         stickButton.interactable = false;
         playAgainButton.interactable = true;
 
+        //========GANAR Y PERDER=========
         if (resultado == "ganar")
         {
             finalMessage.text = "Ganaste!!!";
@@ -198,11 +200,13 @@ public class Deck : MonoBehaviour
         {
             finalMessage.text = "Perdiste!!!";
         }
+        //========EMPATE=========
         else if (resultado == "empate")
         {
             finalMessage.text = "Empate!!!";
             banca += apuestaActual;
         }
+        //========CASOS BLACKJACK=========
         else if (resultado == "blackjack_player")
         {
             finalMessage.text = "¡Blackjack! Has ganado";
@@ -270,7 +274,7 @@ public class Deck : MonoBehaviour
         {
             unseenValues.Add(values[Shuffle[i]]); // Añadir cartas restantes en el mazo
         }
-        unseenValues.Add(dealerHand.cards[0].GetComponent<CardModel>().value); // Añadir la carta oculta
+        unseenValues.Add(dealerHand.cards[0].GetComponent<CardModel>().value); // Añadir la carta oculta como una posibilidad dentro de el pozo de cartas posibles, para no excluirla sin querer
 
         foreach (int unseenVal in unseenValues)
         {
@@ -289,7 +293,7 @@ public class Deck : MonoBehaviour
         int player17to21Count = 0;
         int playerBustCount = 0;
         int remainingInDeck = 52 - cardIndex;
-
+        // Con la funcion CalculateHypotheticalPoints, básicamente le sumamos todas las cartas restantes y vemos los casos en los que se queda entre 17 y 21 o se pasa de 21
         for (int i = cardIndex; i < 52; i++)
         {
             int nextCardVal = values[Shuffle[i]];
@@ -417,20 +421,20 @@ public class Deck : MonoBehaviour
 
             if (pDealer > 21)
             {
-                TerminarJuego("ganar"); // "Ganaste!!!"
+                TerminarJuego("ganar"); // Ganar
 
             }
-            else if (pDealer < pPlayer) // |puntos| dealer < player
+            else if (pDealer < pPlayer)
             {
-                TerminarJuego("ganar"); // "Ganaste!!!"
+                TerminarJuego("ganar"); // Ganar
             }
-            else if (pDealer == pPlayer) // Añadimos empate para que las apuestas sean justas
+            else if (pDealer == pPlayer) 
             {
-                TerminarJuego("empate");
+                TerminarJuego("empate"); // Empate
             }
             else
             {
-                TerminarJuego("perder"); // "Perdiste!!!"
+                TerminarJuego("perder"); // Perder
             }
         }
     }
