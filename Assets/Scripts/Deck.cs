@@ -37,8 +37,10 @@ public class Deck : MonoBehaviour
     public int[] values = new int[52];
     int cardIndex = 0;
 
+    public ParticleSystem confetti;//confetti
     private void Awake()
     {
+        confetti.Stop();
         InitCardValues();
     }
 
@@ -195,6 +197,7 @@ public class Deck : MonoBehaviour
         {
             finalMessage.text = "Ganaste!!!";
             banca += apuestaActual * 2;
+            confetti.Play();
         }
         else if (resultado == "perder")
         {
@@ -211,6 +214,7 @@ public class Deck : MonoBehaviour
         {
             finalMessage.text = "¡Blackjack! Has ganado";
             banca += apuestaActual * 2;
+            confetti.Play();
         }
         else if (resultado == "blackjack_dealer")
         {
@@ -441,6 +445,7 @@ public class Deck : MonoBehaviour
 
     public void PlayAgain()
     {
+        confetti.Stop();
         finalMessage.text = "";
         player.GetComponent<CardHand>().ClearCards();
         dealer.GetComponent<CardHand>().ClearCards();
