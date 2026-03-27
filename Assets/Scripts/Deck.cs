@@ -188,6 +188,7 @@ public class Deck : MonoBehaviour
     // Método acabar la ronda y repartimos dinero o quitamos, también el mensaje final
     private void TerminarJuego(string resultado)
     {
+        dealer.GetComponent<CardHand>().InitialToggle();
         hitButton.interactable = false;
         stickButton.interactable = false;
         playAgainButton.interactable = true;
